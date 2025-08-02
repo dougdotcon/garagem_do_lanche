@@ -1,0 +1,39 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Finalizar Pedido</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script defer src="scripts/entrega.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h2>Escolha um acompanhamento:</h2>
+    <div id="acompanhamentos" class="opcoes">
+      <button onclick="selecionarAcompanhamento('Fritas')">🍟 Fritas</button>
+      <button onclick="selecionarAcompanhamento('Legumes')">🥦 Legumes</button>
+      <button onclick="selecionarAcompanhamento('Purê')">🥔 Purê</button>
+      <button onclick="selecionarAcompanhamento('Salada Verde')">🥒 Salada Verde</button>
+    </div>
+
+    <form id="formulario" style="display:none" onsubmit="finalizarPedido(event)">
+      <h2>Dados para Entrega</h2>
+      <input type="text" id="nome" placeholder="Nome completo" required />
+      <input type="text" id="whatsapp" placeholder="WhatsApp" required />
+      <input type="text" id="cep" placeholder="CEP" onblur="buscarCEP()" required />
+      <input type="text" id="rua" placeholder="Rua" required />
+      <input type="text" id="numero" placeholder="Número" required />
+      <input type="text" id="bairro" placeholder="Bairro" required />
+      <select id="pagamento" required>
+        <option value="">Forma de Pagamento</option>
+        <option value="Dinheiro">Dinheiro</option>
+        <option value="Pix">Pix</option>
+        <option value="Cartão">Cartão</option>
+      </select>
+      <p id="total"></p>
+      <button type="submit">Finalizar Pedido</button>
+    </form>
+  </div>
+</body>
+</html>
