@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Administrativo - Garagem do Lanche</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="api.js"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+        }
+
+        .login-container {
+            background: white;
+            padding: 3rem;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .logo {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 2rem;
+            font-weight: 300;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #555;
+            font-weight: 500;
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+            box-sizing: border-box;
+        }
+
+        input[type="text"]:focus,
+        input[type="password"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-login:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 1rem;
+            border-radius: 10px;
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .loading {
+            display: none;
+            margin-top: 1rem;
+        }
+
+        .back-link {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid #eee;
+        }
+
+        .back-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo">🔐</div>
+        <h1>Painel Administrativo</h1>
+        
+        <form id="loginForm" onsubmit="fazerLogin(event)">
+            <div class="form-group">
+                <label for="username">Usuário:</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Senha:</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            
+            <button type="submit" class="btn-login" id="btnLogin">
+                Entrar
+            </button>
+        </form>
+        
+        <div class="loading" id="loading">
+            Verificando credenciais...
+        </div>
+        
+        <div class="error" id="error"></div>
+        
+        <div class="back-link">
+            <a href="index.html">← Voltar ao cardápio</a>
+        </div>
+    </div>
+
+    <script>
+        async function fazerLogin(event) {
+            event.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const btnLogin = document.getElementById('btnLogin');
+            const loading = document.getElementById('loading');
+            const error = document.getElementById('error');
+            
+            // Reset UI
+            error.style.display = 'none';
+            btnLogin.disabled = true;
+            loading.style.display = 'block';
+            
+            try {
+                const response = await fetch('http://localhost:5000/api/admin/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Salvar dados do usuário
+                    localStorage.setItem('admin_user', JSON.stringify(data.user));
+                    
+                    // Redirecionar para o painel
+                    window.location.href = 'admin-dashboard.html';
+                } else {
+                    throw new Error(data.error || 'Erro no login');
+                }
+                
+            } catch (err) {
+                error.textContent = err.message;
+                error.style.display = 'block';
+            } finally {
+                btnLogin.disabled = false;
+                loading.style.display = 'none';
+            }
+        }
+        
+        // Verificar se já está logado
+        document.addEventListener('DOMContentLoaded', () => {
+            const adminUser = localStorage.getItem('admin_user');
+            if (adminUser) {
+                // Verificar se a sessão ainda é válida
+                fetch('http://localhost:5000/api/admin/dashboard', {
+                    credentials: 'include'
+                })
+                .then(response => {
+                    if (response.ok) {
+                        window.location.href = 'admin-dashboard.html';
+                    }
+                })
+                .catch(() => {
+                    // Sessão inválida, limpar dados
+                    localStorage.removeItem('admin_user');
+                });
+            }
+        });
+    </script>
+</body>
+</html>

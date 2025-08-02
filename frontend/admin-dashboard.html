@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Administrativo - Garagem do Lanche</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="api.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+            color: #333;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 300;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .btn-logout {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .btn-logout:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .stat-card .icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card .number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card .label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .nav-tabs {
+            display: flex;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .nav-tab {
+            flex: 1;
+            padding: 1rem;
+            background: white;
+            border: none;
+            cursor: pointer;
+            transition: background 0.3s;
+            font-size: 1rem;
+        }
+
+        .nav-tab.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .nav-tab:hover:not(.active) {
+            background: #f0f0f0;
+        }
+
+        .tab-content {
+            display: none;
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .table th,
+        .table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        .table th {
+            background: #f8f9fa;
+            font-weight: 600;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin: 0 0.25rem;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 1rem;
+            border-radius: 5px;
+            margin: 1rem 0;
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .status-aceito { background: #d4edda; color: #155724; }
+        .status-preparo { background: #fff3cd; color: #856404; }
+        .status-entrega { background: #cce5ff; color: #004085; }
+        .status-finalizado { background: #d1ecf1; color: #0c5460; }
+        .status-cancelado { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🍔 Painel Administrativo - Garagem do Lanche</h1>
+        <div class="user-info">
+            <span id="userName">Carregando...</span>
+            <button class="btn-logout" onclick="logout()">Sair</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Estatísticas -->
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <div class="icon">📊</div>
+                <div class="number" id="totalPedidos">-</div>
+                <div class="label">Total de Pedidos</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon">🍔</div>
+                <div class="number" id="totalPratos">-</div>
+                <div class="label">Pratos no Cardápio</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon">👥</div>
+                <div class="number" id="totalUsuarios">-</div>
+                <div class="label">Usuários Ativos</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon">💰</div>
+                <div class="number" id="receitaTotal">R$ -</div>
+                <div class="label">Receita Total</div>
+            </div>
+        </div>
+
+        <!-- Navegação por abas -->
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showTab('pedidos')">Pedidos</button>
+            <button class="nav-tab" onclick="showTab('cardapio')">Cardápio</button>
+            <button class="nav-tab" onclick="showTab('usuarios')">Usuários</button>
+            <button class="nav-tab" onclick="showTab('caixa')">Caixa</button>
+        </div>
+
+        <!-- Conteúdo das abas -->
+        <div id="pedidos" class="tab-content active">
+            <h2>Gerenciar Pedidos</h2>
+            <div id="pedidosContent">
+                <div class="loading">Carregando pedidos...</div>
+            </div>
+        </div>
+
+        <div id="cardapio" class="tab-content">
+            <h2>Gerenciar Cardápio</h2>
+            <button class="btn btn-primary" onclick="showAddPratoForm()">+ Adicionar Prato</button>
+            <div id="cardapioContent">
+                <div class="loading">Carregando cardápio...</div>
+            </div>
+        </div>
+
+        <div id="usuarios" class="tab-content">
+            <h2>Gerenciar Usuários</h2>
+            <button class="btn btn-primary" onclick="showAddUserForm()">+ Adicionar Usuário</button>
+            <div id="usuariosContent">
+                <div class="loading">Carregando usuários...</div>
+            </div>
+        </div>
+
+        <div id="caixa" class="tab-content">
+            <h2>Relatório de Caixa</h2>
+            <div id="caixaContent">
+                <div class="loading">Carregando relatório...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+
+        // Verificar autenticação ao carregar
+        document.addEventListener('DOMContentLoaded', async () => {
+            await checkAuth();
+            await loadDashboard();
+        });
+
+        async function checkAuth() {
+            const adminUser = localStorage.getItem('admin_user');
+            if (!adminUser) {
+                window.location.href = 'admin-login.html';
+                return;
+            }
+
+            currentUser = JSON.parse(adminUser);
+            document.getElementById('userName').textContent = currentUser.nome_completo;
+
+            // Verificar se a sessão ainda é válida
+            try {
+                const response = await fetch('http://localhost:5000/api/admin/dashboard', {
+                    credentials: 'include'
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Sessão inválida');
+                }
+            } catch (error) {
+                localStorage.removeItem('admin_user');
+                window.location.href = 'admin-login.html';
+            }
+        }
+
+        async function loadDashboard() {
+            try {
+                const response = await fetch('http://localhost:5000/api/admin/dashboard', {
+                    credentials: 'include'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const dashboard = data.dashboard;
+                    document.getElementById('totalPedidos').textContent = dashboard.total_pedidos;
+                    document.getElementById('totalPratos').textContent = dashboard.total_pratos;
+                    document.getElementById('totalUsuarios').textContent = dashboard.total_usuarios;
+                    document.getElementById('receitaTotal').textContent = `R$ ${dashboard.receita_total.toFixed(2)}`;
+                }
+            } catch (error) {
+                console.error('Erro ao carregar dashboard:', error);
+            }
+        }
+
+        function showTab(tabName) {
+            // Esconder todas as abas
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remover classe active de todos os botões
+            document.querySelectorAll('.nav-tab').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Mostrar aba selecionada
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+            
+            // Carregar conteúdo da aba
+            loadTabContent(tabName);
+        }
+
+        async function loadTabContent(tabName) {
+            switch(tabName) {
+                case 'pedidos':
+                    await loadPedidos();
+                    break;
+                case 'cardapio':
+                    await loadCardapio();
+                    break;
+                case 'usuarios':
+                    await loadUsuarios();
+                    break;
+                case 'caixa':
+                    await loadCaixa();
+                    break;
+            }
+        }
+
+        async function loadPedidos() {
+            // Implementar carregamento de pedidos
+            document.getElementById('pedidosContent').innerHTML = '<div class="loading">Carregando pedidos...</div>';
+        }
+
+        async function loadCardapio() {
+            // Implementar carregamento de cardápio
+            document.getElementById('cardapioContent').innerHTML = '<div class="loading">Carregando cardápio...</div>';
+        }
+
+        async function loadUsuarios() {
+            // Implementar carregamento de usuários
+            document.getElementById('usuariosContent').innerHTML = '<div class="loading">Carregando usuários...</div>';
+        }
+
+        async function loadCaixa() {
+            // Implementar carregamento de caixa
+            document.getElementById('caixaContent').innerHTML = '<div class="loading">Carregando relatório...</div>';
+        }
+
+        async function logout() {
+            try {
+                await fetch('http://localhost:5000/api/admin/logout', {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+            } catch (error) {
+                console.error('Erro no logout:', error);
+            } finally {
+                localStorage.removeItem('admin_user');
+                window.location.href = 'admin-login.html';
+            }
+        }
+
+        function showAddPratoForm() {
+            alert('Funcionalidade em desenvolvimento');
+        }
+
+        function showAddUserForm() {
+            alert('Funcionalidade em desenvolvimento');
+        }
+
+        // Carregar conteúdo inicial
+        loadTabContent('pedidos');
+    </script>
+</body>
+</html>
